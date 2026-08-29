@@ -24,3 +24,7 @@ def health():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=PORT)
+
+@app.route('/api/v1/info')
+def api_info():
+    return jsonify({"author": "Baswaraj Patil", "docker_hub": "baswarajpatil123"})
