@@ -1,0 +1,49 @@
+pipeline {
+    agent { label 'slave-node' }
+    
+    triggers {
+        pollSCM('H/5 * * * *')
+        githubPush()
+    }
+    
+    tools {
+        maven 'Maven-3.9.6'
+        jdk 'JDK-17'
+    }
+    
+    stages {
+        stage('Checkout SCM') {
+            steps {
+                echo "Cloning Java Maven Web Application repository from GitHub..."
+                git branch: 'main', url: 'https://github.com/baswarajpatil123/devops-maven-webapp.git'
+            }
+        }
+        
+        stage('Maven Build & Package') {
+            steps {
+                echo "Compiling source code and packaging WAR artifact on Jenkins Slave Node..."
+                sh 'mvn clean package -DskipTests=false'
+            }
+        }
+        
+        stage('Deploy to Tomcat') {
+            steps {
+                echo "Deploying maven-web-app.war to Apache Tomcat Server..."
+                sh '''
+                    scp -o StrictHostKeyChecking=no target/maven-web-app.war tomcat@172.31.45.80:/opt/tomcat/webapps/
+                    echo "Application deployed to http://172.31.45.80:8080/maven-web-app/"
+                '''
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo "CI/CD Pipeline Completed Successfully for Baswaraj Patil (baswarajpatil123)!"
+            archiveArtifacts artifacts: 'target/*.war', fingerprint: true
+        }
+        failure {
+            echo "Pipeline Failed! Check logs."
+        }
+    }
+}
